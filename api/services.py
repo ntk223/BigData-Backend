@@ -26,7 +26,25 @@ class ModelService:
         self.features_order = self.metadata.get("features_order", [])
         self.discharge_location_mapping = self.metadata.get("discharge_location_mapping", {})
         
-        # 2. Load Mortality Model & Imputer
+        # 2. Define separate mapping for Mortality Model (due to alphabetical sorting with "Missing" category shift)
+        self.mortality_discharge_location_mapping = {
+            "ACUTE HOSPITAL": 0,
+            "AGAINST ADVICE": 1,
+            "ASSISTED LIVING": 2,
+            "CHRONIC/LONG TERM ACUTE CARE": 3,
+            "HEALTHCARE FACILITY": 4,
+            "HOME": 5,
+            "HOME HEALTH CARE": 6,
+            "HOSPICE": 7,
+            "MISSING": 8,
+            "KHÔNG XÁC ĐỊNH / KHUYẾT": 8,
+            "OTHER FACILITY": 9,
+            "PSYCH FACILITY": 10,
+            "REHAB": 11,
+            "SKILLED NURSING FACILITY": 12
+        }
+        
+        # 3. Load Mortality Model & Imputer
         if not os.path.exists(MORTALITY_MODEL_PATH):
             raise FileNotFoundError(f"Mortality model file not found at {MORTALITY_MODEL_PATH}")
         if not os.path.exists(MORTALITY_IMPUTER_PATH):
@@ -35,8 +53,10 @@ class ModelService:
         self.mortality_model = joblib.load(MORTALITY_MODEL_PATH)
         self.mortality_imputer = joblib.load(MORTALITY_IMPUTER_PATH)
 
-    def preprocess_features(self, payload_dict: dict) -> np.ndarray:
+    def preprocess_features(self, payload_dict: dict, is_mortality: bool = False) -> np.ndarray:
         features_list = []
+        mapping = self.mortality_discharge_location_mapping if is_mortality else self.discharge_location_mapping
+        
         for feature in self.features_order:
             val = payload_dict.get(feature, 0.0)
             
@@ -44,12 +64,12 @@ class ModelService:
             if feature == "discharge_location":
                 if isinstance(val, str):
                     val_upper = val.upper()
-                    val = self.discharge_location_mapping.get(
+                    val = mapping.get(
                         val_upper, 
-                        self.discharge_location_mapping.get("KHÔNG XÁC ĐỊNH / KHUYẾT", 12)
+                        mapping.get("KHÔNG XÁC ĐỊNH / KHUYẾT", 8 if is_mortality else 12)
                     )
                 elif val is None:
-                    val = self.discharge_location_mapping.get("KHÔNG XÁC ĐỊNH / KHUYẾT", 12)
+                    val = mapping.get("KHÔNG XÁC ĐỊNH / KHUYẾT", 8 if is_mortality else 12)
             
             # 2. Handle gender mapping
             elif feature == "gender":
@@ -115,7 +135,7 @@ class ModelService:
         for key, info in scenarios.items():
             simulated_payload = payload_dict.copy()
             simulated_payload["discharge_location"] = info["code"]
-            
+            # print(simulated_payload["discharge_location"])
             features_array = self.preprocess_features(simulated_payload)
             probabilities = self.model.predict_proba(features_array)[0]
             p_total = float(probabilities[1])
@@ -134,7 +154,7 @@ class ModelService:
 
     # ------------------ Mortality Methods ------------------
     def predict_mortality(self, payload_dict: dict) -> dict:
-        features_array = self.preprocess_features(payload_dict)
+        features_array = self.preprocess_features(payload_dict, is_mortality=True)
         
         # Reconstruct DataFrame with feature names (needed for XGBSE / xgboost models trained with column names)
         X_df = pd.DataFrame(features_array, columns=self.features_order)
@@ -172,15 +192,15 @@ class ModelService:
     def run_what_if_mortality_simulation(self, payload_dict: dict) -> dict:
         scenarios = {
             "HOME": {
-                "code": self.discharge_location_mapping.get("HOME", 5),
+                "code": 5,
                 "name": "Về nhà (HOME) - Tự chăm sóc"
             },
             "HOME HEALTH CARE": {
-                "code": self.discharge_location_mapping.get("HOME HEALTH CARE", 6),
+                "code": 6,
                 "name": "HOME HEALTH CARE - Có điều dưỡng hỗ trợ"
             },
             "SKILLED NURSING FACILITY": {
-                "code": self.discharge_location_mapping.get("SKILLED NURSING FACILITY", 11),
+                "code": 12,
                 "name": "VIỆN ĐIỀU DƯỠNG (SNF) - Chăm sóc 24/7"
             }
         }
@@ -199,3 +219,4 @@ class ModelService:
                 "survival_curve": sim_result["survival_curve"]
             }
         return results
+
