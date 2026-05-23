@@ -1,0 +1,2 @@
+source /home/ntkien223/Desktop/bich-da-ta/.venv/bin/activate
+uvicorn app:app --reload
