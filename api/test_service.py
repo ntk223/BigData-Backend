@@ -1,43 +1,25 @@
-from api.services import ModelService
+import joblib
+import pandas as pd
+import numpy as np
+from mortality_service import MortalityService
 import json
 
-service = ModelService()
+service = MortalityService()
 
-# Create a sample payload from the schema default values
-sample = {}
-for feature in service.features_order:
-    if feature == "age":
-        sample[feature] = 75.0
-    elif feature == "gender":
-        sample[feature] = "M"
-    elif feature == "discharge_location":
-        sample[feature] = "HOME"
-    elif feature == "duration_days":
-        sample[feature] = 4.0
-    elif feature == "sbp_mean":
-        sample[feature] = 120.0
-    elif feature == "spo2_mean":
-        sample[feature] = 97.5
-    elif feature == "hr_mean":
-        sample[feature] = 80.0
-    elif feature == "temperature_mean":
-        sample[feature] = 37.0
-    elif feature == "bun_mean":
-        sample[feature] = 30.0
-    elif feature == "pt_min":
-        sample[feature] = 12.0
-    elif feature.startswith("note_emb_"):
-        sample[feature] = 0.01
-    else:
-        sample[feature] = 0.0
+# Tạo một bệnh nhân giả lập nhạy cảm (để mô hình phân biệt HOME và HOME HEALTH CARE)
+np.random.seed(99)
+dummy_patient = {feat: 0.0 for feat in service.features_order}
+dummy_patient["age"] = 80.0
+dummy_patient["gender"] = "M"
+dummy_patient["duration_days"] = 2.0
+dummy_patient["sbp_mean"] = 90.0
+dummy_patient["bun_mean"] = 45.0
 
-print("--- Testing run_what_if_simulation (Readmission) ---")
-res_readmission = service.run_what_if_simulation(sample)
-for key, val in res_readmission.items():
-    print(f"Scenario {key} (code {val['code']}): prob = {val['readmission_probability']:.6f}")
 
-print("\n--- Testing run_what_if_mortality_simulation (Mortality) ---")
-res_mortality = service.run_what_if_mortality_simulation(sample)
-for key, val in res_mortality.items():
-    print(f"Scenario {key} (code {val['code']}): risk = {val['mortality_risk_12m']:.6f}")
+with open("dummy_patient.json", "w") as f:
+    json.dump(dummy_patient, f, indent=2)
 
+# Chạy thử What-if giả lập trên bệnh nhân ngẫu nhiên này
+res = service.run_what_if_simulation(dummy_patient)
+for key in ["HOME", "HOME HEALTH CARE", "SKILLED NURSING FACILITY"]:
+    print(f"{key}: risk = {res[key]['mortality_risk_12m']:.6f}")

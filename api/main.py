@@ -7,14 +7,21 @@ from api.schemas import (
     PredictMortalityResponse,
     WhatIfMortalityResponse
 )
-from api.services import ModelService
+from api.readmission_service import ReadmissionService
+from api.mortality_service import MortalityService
 
-# Initialize the model service
+# Initialize the model services
 try:
-    model_service = ModelService()
+    readmission_service = ReadmissionService()
 except Exception as e:
-    print(f"Error initializing ModelService: {e}")
-    model_service = None
+    print(f"Error initializing ReadmissionService: {e}")
+    readmission_service = None
+
+try:
+    mortality_service = MortalityService()
+except Exception as e:
+    print(f"Error initializing MortalityService: {e}")
+    mortality_service = None
 
 # Initialize FastAPI App
 app = FastAPI(
@@ -54,17 +61,17 @@ def read_root():
 
 @app.get("/metadata")
 def get_metadata():
-    if not model_service:
-        raise HTTPException(status_code=503, detail="Model service is currently unavailable.")
-    return model_service.metadata
+    if not readmission_service:
+        raise HTTPException(status_code=503, detail="Readmission service is currently unavailable.")
+    return readmission_service.metadata
 
 @app.get("/sample")
 def get_sample_payload():
-    if not model_service:
-        raise HTTPException(status_code=503, detail="Model service is currently unavailable.")
+    if not readmission_service:
+        raise HTTPException(status_code=503, detail="Readmission service is currently unavailable.")
         
     sample = {}
-    for feature in model_service.features_order:
+    for feature in readmission_service.features_order:
         if feature == "age":
             sample[feature] = 65.0
         elif feature == "gender":
@@ -89,13 +96,13 @@ def get_sample_payload():
     return sample
 
 # ----------------- Readmission Routes -----------------
-@app.post("/predict", response_model=PredictResponse)
+@app.post("/predict/readmission", response_model=PredictResponse)
 async def predict_readmission(payload: PredictRequest):
-    if not model_service:
-        raise HTTPException(status_code=503, detail="Model service is currently unavailable.")
+    if not readmission_service:
+        raise HTTPException(status_code=503, detail="Readmission service is currently unavailable.")
     try:
         payload_dict = payload.model_dump()
-        result = model_service.predict(payload_dict)
+        result = readmission_service.predict(payload_dict)
         return {
             "status": "success",
             "data": result
@@ -103,13 +110,13 @@ async def predict_readmission(payload: PredictRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
 
-@app.post("/what-if", response_model=WhatIfResponse)
+@app.post("/what-if/readmission", response_model=WhatIfResponse)
 async def what_if_simulation(payload: PredictRequest):
-    if not model_service:
-        raise HTTPException(status_code=503, detail="Model service is currently unavailable.")
+    if not readmission_service:
+        raise HTTPException(status_code=503, detail="Readmission service is currently unavailable.")
     try:
         payload_dict = payload.model_dump()
-        result = model_service.run_what_if_simulation(payload_dict)
+        result = readmission_service.run_what_if_simulation(payload_dict)
         return {
             "status": "success",
             "data": result
@@ -120,11 +127,11 @@ async def what_if_simulation(payload: PredictRequest):
 # ------------------ Mortality Routes ------------------
 @app.post("/predict/mortality", response_model=PredictMortalityResponse)
 async def predict_mortality(payload: PredictRequest):
-    if not model_service:
-        raise HTTPException(status_code=503, detail="Model service is currently unavailable.")
+    if not mortality_service:
+        raise HTTPException(status_code=503, detail="Mortality service is currently unavailable.")
     try:
         payload_dict = payload.model_dump()
-        result = model_service.predict_mortality(payload_dict)
+        result = mortality_service.predict(payload_dict)
         return {
             "status": "success",
             "data": result
@@ -134,11 +141,11 @@ async def predict_mortality(payload: PredictRequest):
 
 @app.post("/what-if/mortality", response_model=WhatIfMortalityResponse)
 async def what_if_mortality_simulation(payload: PredictRequest):
-    if not model_service:
-        raise HTTPException(status_code=503, detail="Model service is currently unavailable.")
+    if not mortality_service:
+        raise HTTPException(status_code=503, detail="Mortality service is currently unavailable.")
     try:
         payload_dict = payload.model_dump()
-        result = model_service.run_what_if_mortality_simulation(payload_dict)
+        result = mortality_service.run_what_if_simulation(payload_dict)
         return {
             "status": "success",
             "data": result

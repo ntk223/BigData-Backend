@@ -70,8 +70,8 @@ View the interactive Swagger UI documentation at:
 * **`GET /sample`**: Generate a pre-filled JSON body with all 236 features. **Use this to avoid manually typing out 236 parameters when testing.**
 
 #### 2. 30-day Readmission Endpoints
-* **`POST /predict`**: Predicts 30-day readmission probability and returns a risk accumulation curve.
-* **`POST /what-if`**: Simulates the 30-day readmission risk across three discharge scenarios (HOME, HOME HEALTH CARE, SKILLED NURSING FACILITY).
+* **`POST /predict/readmission`**: Predicts 30-day readmission probability and returns a risk accumulation curve.
+* **`POST /what-if/readmission`**: Simulates the 30-day readmission risk across three discharge scenarios (HOME, HOME HEALTH CARE, SKILLED NURSING FACILITY).
 
 #### 3. 12-month Mortality Endpoints
 * **`POST /predict/mortality`**: Predicts 12-month mortality risk (`mortality_risk_12m`), Restricted Mean Survival Time (`rmst_12m` in days), and returns a survival probability curve over a 12-month timeline.
