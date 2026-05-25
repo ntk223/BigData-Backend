@@ -1,3 +1,7 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from api.schemas import (
@@ -9,15 +13,13 @@ from api.schemas import (
 )
 from api.readmission_service import ReadmissionService
 from api.mortality_service import MortalityService
-import os
-from dotenv import load_dotenv
+
 
 # Load variables from .env file into environment
-load_dotenv()
 
 # Access variables
-rootPath = os.getenv('ROOT_PATH')
-print(rootPath)   
+# rootPath = os.getenv('ROOT_PATH')
+# print(rootPath)   
 # Initialize the model services
 try:
     readmission_service = ReadmissionService()
@@ -36,7 +38,7 @@ app = FastAPI(
     title="PREDICTCARE AI - Backend CDSS API (Team 10)",
     description="REST API for predicting 30-day readmission risk (XGBoost) and 12-month mortality risk (XGBSE).",
     version="1.2.0",
-    root_path=rootPath
+    root_path=os.getenv('ROOT_PATH')
 )
 
 # Add CORS Middleware to allow cross-origin testing/frontend integrations
