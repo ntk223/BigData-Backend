@@ -2,9 +2,13 @@
   "task": "mortality",
   "label_col": "mortality_event_12m",
   "target_name": "12-month mortality risk",
-  "auc": 0.88157492671485,
-  "average_precision": 0.5689897592564412,
+  "validation_auc": 0.8903887156716177,
+  "validation_average_precision": 0.5885014009854402,
+  "test_auc": 0.8832399168635351,
+  "test_average_precision": 0.5727523259049468,
   "positive_rate_train": 0.12564262030845774,
+  "positive_rate_val": 0.1318139874993471,
   "positive_rate_test": 0.12232018561484918,
-  "note": "Model-only xAI artifacts. No deployment code included."
+  "shap_output_space": "probability",
+  "note": "Model-only xAI artifacts. Auxiliary XGBoost model explains horizon-level 12-month mortality risk. No deployment code included."
 }

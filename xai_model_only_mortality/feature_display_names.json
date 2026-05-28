@@ -1,0 +1,19 @@
+{
+  "age": "Tuổi",
+  "gender": "Giới tính",
+  "duration_days": "Thời gian nằm viện",
+  "los_days": "Thời gian nằm viện",
+  "spo2_mean": "Độ bão hòa oxy trung bình",
+  "spo2_min": "Độ bão hòa oxy thấp nhất",
+  "sbp_mean": "Huyết áp tâm thu trung bình",
+  "sbp_min": "Huyết áp tâm thu thấp nhất",
+  "hr_mean": "Nhịp tim trung bình",
+  "hr_max": "Nhịp tim cao nhất",
+  "temperature_mean": "Nhiệt độ trung bình",
+  "creatinine_mean": "Creatinine trung bình",
+  "bun_mean": "BUN trung bình",
+  "wbc_mean": "Bạch cầu trung bình",
+  "lactate_mean": "Lactate trung bình",
+  "albumin_mean": "Albumin trung bình",
+  "discharge_location": "Phương án xuất viện"
+}
