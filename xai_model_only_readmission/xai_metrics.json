@@ -1,0 +1,10 @@
+{
+  "task": "readmission",
+  "label_col": "event_flag_readmission",
+  "target_name": "30-day readmission risk",
+  "auc": 0.6991185537697167,
+  "average_precision": 0.37548018043812703,
+  "positive_rate_train": 0.19976153588553722,
+  "positive_rate_test": 0.20671925754060325,
+  "note": "Model-only xAI artifacts. No deployment code included."
+}

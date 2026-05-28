@@ -82,3 +82,27 @@ class ScenarioMortalityDetail(BaseModel):
 class WhatIfMortalityResponse(BaseModel):
     status: str
     data: Dict[str, ScenarioMortalityDetail]
+
+# -------------------- XAI Explanation Schemas --------------------
+class XAIFactorCard(BaseModel):
+    feature: str
+    display_name: str
+    value: float
+    shap_value: float
+    direction: str  # "increase_risk" or "decrease_risk"
+    importance: str  # "high", "medium", "low"
+
+class XAIExplanationData(BaseModel):
+    task: str
+    target: str
+    risk_percent: float
+    top_risk_factors: List[XAIFactorCard]
+    top_protective_factors: List[XAIFactorCard]
+    note: str
+
+    class Config:
+        extra = "allow"  # allow extra fields like risk_readmission_30d or risk_mortality_12m
+
+class XAIExplanationResponse(BaseModel):
+    status: str
+    data: XAIExplanationData

@@ -117,15 +117,15 @@ class MortalityService:
         scenarios = {
             "HOME": {
                 "code": 5,
-                "name": "Về nhà (HOME) - Tự chăm sóc"
+                "name": "HOME"
             },
             "HOME HEALTH CARE": {
                 "code": 6,
-                "name": "HOME HEALTH CARE - Có điều dưỡng hỗ trợ"
+                "name": "HOME HEALTH CARE"
             },
             "SKILLED NURSING FACILITY": {
                 "code": 12,
-                "name": "VIỆN ĐIỀU DƯỠNG (SNF) - Chăm sóc 24/7"
+                "name": "SKILLED NURSING FACILITY"
             }
         }
 

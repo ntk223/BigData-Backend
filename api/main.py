@@ -9,10 +9,12 @@ from api.schemas import (
     PredictResponse, 
     WhatIfResponse,
     PredictMortalityResponse,
-    WhatIfMortalityResponse
+    WhatIfMortalityResponse,
+    XAIExplanationResponse
 )
 from api.readmission_service import ReadmissionService
 from api.mortality_service import MortalityService
+from api.xai_service import XAIService
 
 
 # Load variables from .env file into environment
@@ -32,6 +34,12 @@ try:
 except Exception as e:
     print(f"Error initializing MortalityService: {e}")
     mortality_service = None
+
+try:
+    xai_service = XAIService()
+except Exception as e:
+    print(f"Error initializing XAIService: {e}")
+    xai_service = None
 
 # Initialize FastAPI App
 app = FastAPI(
@@ -63,10 +71,12 @@ def read_root():
             "swagger_docs": "/docs",
             "metadata": "/metadata",
             "sample_request": "/sample",
-            "predict_readmission": "/predict/",
-            "what_if_readmission": "/what-if",
+            "predict_readmission": "/predict/readmission",
+            "what_if_readmission": "/what-if/readmission",
             "predict_mortality": "/predict/mortality",
-            "what_if_mortality": "/what-if/mortality"
+            "what_if_mortality": "/what-if/mortality",
+            "explain_readmission": "/explain/readmission",
+            "explain_mortality": "/explain/mortality"
         }
     }
 
@@ -163,3 +173,34 @@ async def what_if_mortality_simulation(payload: PredictRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"What-If mortality simulation error: {str(e)}")
+
+# ===================== XAI Explanation Routes =====================
+@app.post("/explain/readmission", response_model=XAIExplanationResponse)
+async def explain_readmission(payload: PredictRequest):
+    """SHAP-based explanation for the 30-day readmission auxiliary XGBoost model."""
+    if not xai_service or not xai_service.readmission_explainer:
+        raise HTTPException(status_code=503, detail="Readmission XAI service is currently unavailable.")
+    try:
+        payload_dict = payload.model_dump()
+        result = xai_service.explain_readmission(payload_dict, top_k=5)
+        return {
+            "status": "success",
+            "data": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"XAI Readmission explanation error: {str(e)}")
+
+@app.post("/explain/mortality", response_model=XAIExplanationResponse)
+async def explain_mortality(payload: PredictRequest):
+    """SHAP-based explanation for the 12-month mortality auxiliary XGBoost model."""
+    if not xai_service or not xai_service.mortality_explainer:
+        raise HTTPException(status_code=503, detail="Mortality XAI service is currently unavailable.")
+    try:
+        payload_dict = payload.model_dump()
+        result = xai_service.explain_mortality(payload_dict, top_k=5)
+        return {
+            "status": "success",
+            "data": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"XAI Mortality explanation error: {str(e)}")

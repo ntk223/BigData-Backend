@@ -1,0 +1,10 @@
+{
+  "task": "mortality",
+  "label_col": "mortality_event_12m",
+  "target_name": "12-month mortality risk",
+  "auc": 0.88157492671485,
+  "average_precision": 0.5689897592564412,
+  "positive_rate_train": 0.12564262030845774,
+  "positive_rate_test": 0.12232018561484918,
+  "note": "Model-only xAI artifacts. No deployment code included."
+}

@@ -87,15 +87,15 @@ class ReadmissionService:
         scenarios = {
             "HOME": {
                 "code": self.discharge_location_mapping.get("HOME", 5),
-                "name": "Về nhà (HOME) - Tự chăm sóc"
+                "name": "HOME"
             },
             "HOME HEALTH CARE": {
                 "code": self.discharge_location_mapping.get("HOME HEALTH CARE", 6),
-                "name": "HOME HEALTH CARE - Có điều dưỡng hỗ trợ"
+                "name": "HOME HEALTH CARE"
             },
             "SKILLED NURSING FACILITY": {
                 "code": self.discharge_location_mapping.get("SKILLED NURSING FACILITY", 11),
-                "name": "VIỆN ĐIỀU DƯỠNG (SNF) - Chăm sóc 24/7"
+                "name": "SKILLED NURSING FACILITY"
             }
         }
 
