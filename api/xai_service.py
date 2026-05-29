@@ -146,31 +146,86 @@ def _display_name(feature: str) -> str:
     if base == "gender":
         return f"Giới tính: {category}" if category else "Giới tính"
     if base.startswith("icd10_chap_") or base.startswith("icd_chap_"):
-        cleaned = base.replace("icd10_chap_", "").replace("icd_chap_", "").replace("_", " ").title()
-        return f"ICD-10: {cleaned}"
-    return FRIENDLY_NAMES.get(base, base)
+        cleaned = base.replace("icd10_chap_", "").replace("icd_chap_", "").replace("_", " ")
+        return f"Nhóm chẩn đoán ICD: {cleaned}"
+    if _is_note_embedding(feature):
+        return "Biểu diễn văn bản lâm sàng"
+    return FRIENDLY_NAMES.get(base, base.replace("_", " "))
+
+
+def _format_value(feature: str, value) -> str:
+    base, category = _parse_feature(feature)
+    if category is not None:
+        return "Có" if float(value) >= 0.5 else "Không"
+    try:
+        v = float(value)
+    except Exception:
+        return str(value)
+    if base == "age":
+        return f"{v:.0f} tuổi"
+    if "spo2" in base:
+        return f"{v:.0f}%"
+    if "sbp" in base:
+        return f"{v:.0f} mmHg"
+    if "hr" in base or "heart_rate" in base:
+        return f"{v:.0f} bpm"
+    if base == "duration_days":
+        return f"{v:.1f} ngày"
+    if "creatinine" in base:
+        return f"{v:.2f} mg/dL"
+    if "lactate" in base:
+        return f"{v:.2f} mmol/L"
+    return f"{v:.2f}"
+
+
+def _clinical_sentence(feature: str, value, direction: str) -> str:
+    base, category = _parse_feature(feature)
+    inc = direction == "increase_risk"
+
+    if base == "age":
+        return "Tuổi cao là yếu tố làm tăng nguy cơ sau xuất viện." if inc else "Tuổi của bệnh nhân làm giảm một phần nguy cơ."
+    if "spo2" in base:
+        return "Độ bão hòa oxy thấp phản ánh tình trạng hô hấp chưa ổn định." if inc else "Độ bão hòa oxy ổn định làm giảm một phần nguy cơ."
+    if "sbp" in base:
+        return "Huyết áp bất thường làm tăng nguy cơ sau xuất viện." if inc else "Huyết áp tương đối ổn định làm giảm một phần nguy cơ."
+    if "hr" in base or "heart_rate" in base:
+        return "Nhịp tim bất thường làm tăng nguy cơ biến cố." if inc else "Nhịp tim ổn định làm giảm một phần nguy cơ."
+    if "creatinine" in base or "bun" in base:
+        return "Dấu hiệu chức năng thận bất thường làm tăng nguy cơ." if inc else "Chức năng thận ít bất thường hơn làm giảm một phần nguy cơ."
+    if "wbc" in base or "lactate" in base:
+        return "Dấu hiệu nhiễm trùng hoặc stress sinh lý làm tăng nguy cơ." if inc else "Các chỉ dấu viêm/stress thấp hơn làm giảm một phần nguy cơ."
+    if base.startswith("icd"):
+        return "Nhóm chẩn đoán này làm tăng nguy cơ." if inc else "Việc không có/ít liên quan tới nhóm chẩn đoán này làm giảm nguy cơ."
+    if base == "discharge_location":
+        return "Trong dữ liệu lịch sử, phương án xuất viện này liên quan tới nguy cơ cao hơn." if inc else "Trong dữ liệu lịch sử, phương án xuất viện này liên quan tới nguy cơ thấp hơn. "
+
+    return f"{_display_name(feature)} làm {'tăng' if inc else 'giảm'} nguy cơ."
 
 
 def _importance_label(abs_val: float, all_abs: list) -> str:
     if not all_abs:
         return "low"
+    p50 = float(np.percentile(all_abs, 50))
     p75 = float(np.percentile(all_abs, 75))
-    p90 = float(np.percentile(all_abs, 90))
-    if abs_val >= p90:
+    if abs_val >= p75:
         return "high"
-    elif abs_val >= p75:
+    elif abs_val >= p50:
         return "medium"
     return "low"
 
 
 def _make_card(feature: str, value: float, shap_val: float, all_abs: list) -> dict:
+    direction = "increase_risk" if shap_val > 0 else "decrease_risk"
     return {
         "feature": _strip_prefix(feature),
         "display_name": _display_name(feature),
         "value": round(float(value), 4),
-        "shap_value": round(float(shap_val), 6),
-        "direction": "increase_risk" if shap_val > 0 else "decrease_risk",
+        "display_value": _format_value(feature, value),
+        "direction": direction,
+        "impact": "Tăng nguy cơ" if direction == "increase_risk" else "Giảm nguy cơ",
         "importance": _importance_label(abs(shap_val), all_abs),
+        "shap_value": round(float(shap_val), 6),
+        "explanation": _clinical_sentence(feature, value, direction),
     }
 
 

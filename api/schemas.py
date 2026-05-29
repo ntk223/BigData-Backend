@@ -88,9 +88,12 @@ class XAIFactorCard(BaseModel):
     feature: str
     display_name: str
     value: float
+    display_value: Optional[str] = None
     shap_value: float
     direction: str  # "increase_risk" or "decrease_risk"
+    impact: Optional[str] = None
     importance: str  # "high", "medium", "low"
+    explanation: Optional[str] = None
 
 class XAIExplanationData(BaseModel):
     task: str
